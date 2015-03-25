@@ -45,15 +45,15 @@ use Carp;
 $Carp::Verbose = 1;
 
 use FindBin qw($Bin);
-use lib "$Bin/../modules";
+use lib "$Bin/../lib";
 
 use Sanger::CGP::TraFiC::Parser;
 
 try {
   my $options = option_builder();
   my $parser = Sanger::CGP::TraFiC::Parser->new;
-  $parser->set_output($options->{'o'});
-  $parser->process_files($options->{'i'}, $options->{'r'});
+  $parser->set_output($options->{'o'}, , $options->{'i'}->[0], $options->{'c'});
+  $parser->process_files($options->{'i'}, $options->{'c'});
 }
 catch {
   croak $_;
@@ -68,7 +68,7 @@ sub option_builder {
 		'h|help'        => \$opts{'h'},
 		'o|output=s'    => \$opts{'o'},
 		'i|input=s@'    => \$opts{'i'},
-		'r|readgroup=s' => \$opts{'r'},
+		'c|chr=s'       => \$opts{'c'},
 	);
 
 	pod2usage(0) if($opts{'h'});
@@ -95,26 +95,28 @@ __END__
 
 =head1 NAME
 
-candidateReads.pl - Find candidate reads for transposon or viral detection
+TraFiC_candReads.pl - Find candidate reads for transposon or viral detection
 
 =head1 SYNOPSIS
 
-candidateReads.pl [-h] -o /some/path/ -i sample.bam -i lane.ump.bam ...
+TraFiC_candReads.pl [-h] -o /some/path/ -i sample.bam -i lane.ump.bam ...
 
   Required options:
 
-    --input   (-i)    Define at least once
+    --input   (-i)  Define at least once
 
   Other options:
 
-    --output  (-o)    Output written to specified folder as candidates.fa [.]
+    --output  (-o)  Output written to specified folder as candidates.fa [.]
 
-    --readgroup (-r)  Readgroup id for parallel processing.
-                        - only one input file should be specified
+    --chr     (-c)  Process just this chromosome/contig
+                     - Output will be prefixed with seq name
+                     - Additional output files of <chr>.o1.fa and <chr>.o2.fa generated
+                        - handling these is out of the scope of this help.
 
-    --help      (-h)  This message
+    --help    (-h)  This message
 
   Examples:
-    perl ~/candidateReads.pl -o $HOME/trafic/COLO-829 -i COLO-829.bam
+    TraFiC_candReads.pl -o $HOME/trafic/COLO-829 -i COLO-829.bam
 
 =cut

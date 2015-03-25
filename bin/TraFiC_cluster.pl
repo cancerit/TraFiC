@@ -46,7 +46,7 @@ use Carp;
 $Carp::Verbose = 1;
 
 use FindBin qw($Bin);
-use lib "$Bin/../modules";
+use lib "$Bin/../lib";
 
 use Sanger::CGP::TraFiC::Formatter;
 use Sanger::CGP::TraFiC::Cluster;
@@ -126,11 +126,11 @@ __END__
 
 =head1 NAME
 
-cluster.pl - Generate files suitable for input to cluster discovery
+TraFic_cluster.pl - Generate files suitable for input to cluster discovery
 
 =head1 SYNOPSIS
 
-cluster.pl [-h] -o /some/path/ -r %.out -f %.fa
+TraFic_cluster.pl [-h] -o /some/path/ -r %.out -f %.fa
 
   Required options:
 
@@ -152,6 +152,6 @@ cluster.pl [-h] -o /some/path/ -r %.out -f %.fa
     --help    (-h)  This message
 
   Examples:
-    perl ~/cluster.pl -o $HOME/trafic -r COLO-829.%.fa.out -f COLO-829.fa
+    TraFic_cluster.pl -o $HOME/trafic -r COLO-829.%.fa.out -f COLO-829.fa
 
 =cut

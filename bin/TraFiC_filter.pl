@@ -46,7 +46,7 @@ use Carp;
 $Carp::Verbose = 1;
 
 use FindBin qw($Bin);
-use lib "$Bin/../modules";
+use lib "$Bin/../lib";
 
 use Sanger::CGP::TraFiC::Filter;
 
@@ -120,11 +120,11 @@ __END__
 
 =head1 NAME
 
-filter.pl - Filter clusters
+TraFic_filter.pl - Filter clusters
 
 =head1 SYNOPSIS
 
-filter.pl [-h] -o /some/path/ -r %.out -f %.fa
+TraFic_filter.pl [-h] -o /some/path/ -r %.out -f %.fa
 
   Required options:
 
@@ -156,7 +156,7 @@ filter.pl [-h] -o /some/path/ -r %.out -f %.fa
     --sorted  (-s)  Assume all inputs are sorted
 
   Examples:
-    perl ~/filter.pl -o tumour/filtered/ -i tumour/reciprocal_clusters.txt -f normal/reciprocal_clusters.txt \
+    TraFic_filter -o tumour/filtered/ -i tumour/reciprocal_clusters.txt -f normal/reciprocal_clusters.txt \
      -f ref/known_false_pos.txt -f ref/normal_panel.txt \
      -t hg19_TEs.txt -d 200
 
