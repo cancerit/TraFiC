@@ -91,12 +91,21 @@ my %index_max = ( 'select'  => -1,
 
   if(!exists $options->{'process'} || $options->{'process'} eq 'filter') {
     Sanger::CGP::TraFiC::Implement::filter_results($options);
+
     cleanup($options);
   }
 }
 
 sub cleanup {
-  die "What's cleanup()??, needs implementation";
+  my $options = shift;
+  my $exit = system("tar -C $options->{tmp} -cZf $options->{outdir}/clusters.tar.gz clusters");
+  die "Failed to archive clusters" if($exit);
+  if(-d "$options->{outdir}/logs") {
+    remove_tree("$options->{outdir}/logs_old") if(-e "$options->{outdir}/logs_old");
+    move "$options->{outdir}/logs", "$options->{outdir}/logs_old";
+  }
+  move "$options->{tmp}/logs", "$options->{outdir}/logs";
+  remove_tree $options->{'tmp'};
 }
 
 sub setup {

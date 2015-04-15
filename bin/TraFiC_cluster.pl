@@ -59,6 +59,7 @@ try {
   my $cluster = Sanger::CGP::TraFiC::Cluster->new;
   $cluster->set_input_output($options->{'o'});
   $cluster->set_min_reads($options->{'m'});
+  $cluster->set_paired_alu($options->{'p'});
   warn "Clustering\n";
   $cluster->cluster_hits;
   warn "Finding reciprocal clusters\n";
@@ -95,6 +96,7 @@ sub option_builder {
 		'o|output=s' => \$opts{'o'},
 		'r|rm=s@'    => \$opts{'r'},
 		'f|fa=s@'    => \$opts{'f'},
+		'p|paired'   => \$opts{'p'},
 		'm|min=i'    => \$opts{'m'},
 	);
 
@@ -148,6 +150,7 @@ TraFic_cluster.pl [-h] -o /some/path/ -r %.out -f %.fa
                       - neg_clusters.txt
 
     --min     (-m)  Minimum number of reads required to emit a cluster. [5]
+    --paired  (-p)  Excludes single end mapped Alu from clustering
 
     --help    (-h)  This message
 

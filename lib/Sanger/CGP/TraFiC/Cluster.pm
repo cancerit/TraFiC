@@ -51,9 +51,9 @@ const my @HEADER_MAIN => qw(L_POS R_POS TOTAL_READS SINGLE_END_COUNT INTER_CHROM
 sub new {
     my ($class) = @_;
     croak "Unable to find standard unix 'sort' in path." unless(defined which('sort'));
-    my $self = { };
+    my $self = { 'min_reads' => 5,
+                 'paired_alu' => 0,};
     bless $self, $class;
-    $self->{'min_reads'} = 5;
     return $self;
 }
 
@@ -198,7 +198,7 @@ sub cluster_file {
   while (my $line = <$HITS>) {
     chomp $line;
     my ($rn, $chr, $pos, $fam, $class) = split $TAB, $line;
-    next if($fam eq 'Alu' && $class ne 'INTER_CHROM');
+    next if($fam eq 'Alu' && $class ne 'INTER_CHROM' && $self->{'paired_alu'} == 1);
 
     if($p_chr eq $chr && $p_fam eq $fam && ($pos - $p_pos) <= 200) {
       push @{$cluster}, [$rn, $chr, $pos, $class];
@@ -252,6 +252,12 @@ sub _format_readnames {
 sub set_min_reads {
   my ($self, $min_reads) = @_;
   $self->{'min_reads'} = $min_reads || 5;
+  return 1;
+}
+
+sub set_paired_alu {
+  my ($self, $paired_alu) = @_;
+  $self->{'paired_alu'} = 1 if(defined $paired_alu);
   return 1;
 }
 

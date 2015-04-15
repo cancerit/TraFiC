@@ -166,7 +166,10 @@ sub process_files {
     my ($read1, $read2);
     MAIN: while($read1 = <$process>) {
       next if((substr $read1,0,1) eq '@');
-      $read2 = <$process>;
+      unless($read2 = <$process>) {
+        print {$self->{'ORPHAN_FH'}} $read1; # not chomped
+        last MAIN;
+      }
       chomp ($read1, $read2);
       my @r1 = split /\t/, $read1;
       my @r2 = split /\t/, $read2;

@@ -173,10 +173,11 @@ sub repeat_mask_te {
   my $file_sample = fileparse($infile);
 
   my $divergence;
-	if($file_sample =~ m/^$n_name[.]$index+$/) {
+  # files are name sorted so index won't line up
+	if($file_sample =~ m/^$n_name[.][[:digit:]]+$/) {
 		$divergence = $options->{'ndiv'};
 	}
-	elsif($file_sample =~ m/^$t_name[.]$index+$/) {
+	elsif($file_sample =~ m/^$t_name[.][[:digit:]]+$/) {
 	  $divergence = $options->{'tdiv'};
 	}
 	else {
@@ -239,6 +240,7 @@ sub cluster_te {
                       $tmp, $sample, # repeatmasker in modified fasta
                       $options->{'support'},
                       $cluster_outdir;
+  $command .= ' -p' if($sample eq $options->{'tumour_name'});
 
 
   PCAP::Threaded::external_process_handler(File::Spec->catdir($tmp, 'logs'), $command, $index);
