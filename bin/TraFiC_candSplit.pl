@@ -44,24 +44,33 @@ use File::Path qw(make_path);
 $Carp::Verbose = 1;
 
 use FindBin qw($Bin);
-use lib "$Bin/../modules";
+use lib "$Bin/../lib";
 
 try {
   my $options = option_builder();
+  input_setup($options);
+
+use Data::Dumper;
+
   my $record_count = 0;
   my $file_count = 0;
   my $OUT_FH;
-  while (my $in = <>) {
-    if($record_count == 0) {
-      close $OUT_FH if(defined $OUT_FH);
-      my $file_name = $options->{'o'}.++$file_count;
-      warn "creating $file_name\n";
-      open $OUT_FH, '>', $file_name;
+  for my $in_file(@{$options->{'i'}}) {
+    open my $INF, '<', $in_file;
+    my $file_name;
+    while (my $in = <$INF>) {
+      if($record_count == 0) {
+        close $OUT_FH if(defined $OUT_FH);
+        $file_name = $options->{'o'}.++$file_count;
+        warn "creating $file_name\n";
+        open $OUT_FH, '>', $file_name;
+      }
+      print $OUT_FH $in or die "Failed to write to $file_name";
+      $in = <$INF>;
+      print $OUT_FH $in or die "Failed to write to $file_name";
+      $record_count = 0 if(++$record_count == $options->{'r'});
     }
-    print $OUT_FH $in;
-    $in = <>;
-    print $OUT_FH $in;
-    $record_count = 0 if(++$record_count == $options->{'r'});
+    close $INF;
   }
   close $OUT_FH if(defined $OUT_FH);
   print "$file_count split files generated\n";
@@ -70,6 +79,26 @@ catch {
   croak "An error occurred while splitting files\n$_" if($_);
 };
 
+sub input_setup {
+  my $options = shift;
+  my @in_files;
+  die "Options '-i' ($options->{i}) does not exist as file or directory." unless(-e $options->{'i'});
+  if(-d _) {
+    my $indir = $options->{'i'};
+    opendir(my $dh, $indir) || die "Unable to read from $indir: $OS_ERROR";
+    while(my $thing = readdir $dh) {
+      next if($thing =~ m/^[.]/);
+      push @in_files, "$indir/$thing" if($thing =~ m/[.]fa$/);
+    }
+    closedir($dh);
+  }
+  else {
+    push @in_files, $options->{'i'};
+  }
+  $options->{'i'} = \@in_files;
+  return 1;
+}
+
 sub option_builder {
 	my ($factory) = @_;
 
@@ -77,12 +106,14 @@ sub option_builder {
 
 	&GetOptions (
 		'h|help'        => \$opts{'h'},
+		'i|input=s'       => \$opts{'i'},
 		'o|output=s'    => \$opts{'o'},
 		'r|records=n'   => \$opts{'r'},
 	);
 
 	pod2usage(0) if($opts{'h'});
 
+  pod2usage(q{Input file/folder '-i' must be defined.}) unless($opts{'i'});
 	pod2usage(q{Output prefix '-o' must be defined.}) unless($opts{'o'});
 
 	$opts{'r'} = 350_000 unless($opts{'r'});
@@ -96,14 +127,15 @@ __END__
 
 =head1 NAME
 
-splitCandidates.pl - Split candidate fa files into chunks with non-padded suffix (easier to farm distribute)
+TraFic_candSplit.pl - Split candidate fa files into chunks with non-padded suffix (easier to farm distribute)
 
 =head1 SYNOPSIS
 
-splitCandidates.pl [-h] -o /some/path/prefix. < candidates.fa
+TraFic_candSplit.pl [-h] -o /some/path/prefix. < candidates.fa
 
   Required options:
 
+    --input    (-i)   Input file or directory containing *.fa
     --output   (-o)   Output prefix, directories must be present.
 
   Other options:
@@ -113,6 +145,6 @@ splitCandidates.pl [-h] -o /some/path/prefix. < candidates.fa
     --help      (-h)  This message.
 
   Examples:
-    perl splitCandidates.pl -o $HOME/trafic/split/COLO-829. < candidates.fa
+    TraFic_candSplit.pl -o $HOME/trafic/split/COLO-829. < candidates.fa
 
 =cut

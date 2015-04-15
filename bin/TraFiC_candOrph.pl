@@ -39,7 +39,6 @@ use warnings FATAL => 'all';
 use Try::Tiny qw(try catch);
 use Getopt::Long qw(:config no_auto_abbrev no_ignore_case);
 use Pod::Usage;
-use File::Glob ':glob';
 use File::Path qw(make_path);
 use File::Copy qw(move);
 use Carp;
@@ -48,43 +47,17 @@ $Carp::Verbose = 1;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 
-use Sanger::CGP::TraFiC::Formatter;
-use Sanger::CGP::TraFiC::Cluster;
+use Sanger::CGP::TraFiC::Parser;
 
 try {
   my $options = option_builder();
-  my $formatter = Sanger::CGP::TraFiC::Formatter->new;
-  $formatter->set_output($options->{'o'});
-  $formatter->format_rm_results($options->{'r'}, $options->{'f'});
-  my $cluster = Sanger::CGP::TraFiC::Cluster->new;
-  $cluster->set_input_output($options->{'o'});
-  $cluster->set_min_reads($options->{'m'});
-  $cluster->set_paired_alu($options->{'p'});
-  warn "Clustering\n";
-  $cluster->cluster_hits;
-  warn "Finding reciprocal clusters\n";
-  $cluster->reciprocal_clusters;
+  my $parser = Sanger::CGP::TraFiC::Parser->new;
+  $parser->set_output($options->{'o'}, undef, '*');
+  $parser->process_orphans($options->{'indir'});
 }
 catch {
   croak $_;
 };
-
-sub get_input {
-  #  Expand file lists with % wildcards
-  my ($list) = @_;
-  my @files;
-  foreach my $i_val(@{$list}) {
-    if($i_val =~ m/\%/) {
-      $i_val =~ s/\%/*/g;
-      push @files, bsd_glob($i_val);
-    }
-    else {
-      push @files, $i_val;
-    }
-  }
-  return \@files;
-}
-
 
 sub option_builder {
 	my ($factory) = @_;
@@ -92,19 +65,14 @@ sub option_builder {
 	my %opts;
 
 	&GetOptions (
-		'h|help'     => \$opts{'h'},
-		'o|output=s' => \$opts{'o'},
-		'r|rm=s@'    => \$opts{'r'},
-		'f|fa=s@'    => \$opts{'f'},
-		'p|paired'   => \$opts{'p'},
-		'm|min=i'    => \$opts{'m'},
+		'h|help'        => \$opts{'h'},
+		'o|output=s'    => \$opts{'o'},
+		'i|indir=s'    => \$opts{'indir'},
 	);
 
 	pod2usage(0) if($opts{'h'});
 
-  pod2usage(q{Input ('-f') must be defined at least once}) unless($opts{'f'});
-  pod2usage(q{Input ('-r') must be defined at least once}) unless($opts{'r'});
-
+  pod2usage(q{Input '-i' must be defined}) unless($opts{'indir'});
   if($opts{'o'}) {
     $opts{'o'} =~ s{[/\\]$}{};
     unless(-e $opts{'o'}) {
@@ -112,12 +80,8 @@ sub option_builder {
     }
   }
   else {
-    warn qq{Output will be to current directory\n};
-    $opts{'o'} = '.';
+    $opts{'o'} = $opts{'indir'};
   }
-
-  $opts{'f'} = get_input($opts{'f'});
-  $opts{'r'} = get_input($opts{'r'});
 
   pod2usage("Unexpected data remains on command after parsing:\n\t".(join ' ', @ARGV)) if(@ARGV > 0);
 
@@ -128,33 +92,23 @@ __END__
 
 =head1 NAME
 
-TraFic_cluster.pl - Generate files suitable for input to cluster discovery
+TraFiC_candOrph.pl - Merge orphan reads and find remaining candidates for transposon or viral detection
 
 =head1 SYNOPSIS
 
-TraFic_cluster.pl [-h] -o /some/path/ -r %.out -f %.fa
+TraFiC_candOrph.pl [-h] -o /some/path/ -i path_to_search/
 
   Required options:
 
-    --rm      (-r)  Repeat masker *.out files
-    --fa      (-f)  Modified fasta format originally supplied to repeat masker
-
-      NOTE: Both can be defined once with/without wildcard % or multiple times
+    --indir   (-i)  Define a base path to search for files of type *.o.sam
 
   Other options:
 
-    --output  (-o)  Output written to specified folder (current working directory otherwise):
-                      - pos_hits.txt
-                      - neg_hits.txt
-                      - pos_clusters.txt
-                      - neg_clusters.txt
-
-    --min     (-m)  Minimum number of reads required to emit a cluster. [5]
-    --paired  (-p)  Excludes single end mapped Alu from clustering
+    --output  (-o)  Output written to inputdir unless otherwise specified
 
     --help    (-h)  This message
 
   Examples:
-    TraFic_cluster.pl -o $HOME/trafic -r COLO-829.%.fa.out -f COLO-829.fa
+    TraFiC_candOrph.pl -o $HOME/trafic/COLO-829 -i outdir_of_TraFiC_candReads.pl/
 
 =cut

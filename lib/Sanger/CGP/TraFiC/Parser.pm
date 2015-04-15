@@ -38,6 +38,8 @@ use English qw( -no_match_vars );
 use warnings FATAL => 'all';
 use Carp qw(croak);
 use List::Util qw(first);
+use File::Which qw(which);
+use Capture::Tiny qw(capture);
 
 use Const::Fast qw(const);
 
@@ -73,38 +75,118 @@ sub new {
     return $self;
 }
 
+sub grab_bam_header {
+  my $bam = shift;
+  my $command = which('samtools');
+  die "Can't find 'samtools' in path\n" unless($command);
+  $command .= ' view -H '.$bam;
+  my ($sti,$sto,$err) = capture { system($command); };
+  my $cleaned = q{};
+  for my $line(split /\n/, $sti) {
+    $cleaned .= $line."\n" if($line =~ m/^[@](HD|SQ)/);
+  }
+  return $cleaned;
+}
+
 sub set_output {
-  my ($self, $root_path) = @_;
+  my ($self, $root_path, $bam, $chr) = @_;
   croak "$root_path does not exist." unless(-e $root_path);
   croak "$root_path is not a directory." unless(-d $root_path);
   croak "$root_path cannot be written to." unless(-w $root_path);
-  open my $se, '>', "$root_path/candidates.fa";
+  my $outfile;
+  my $tmpfile;
+  if(defined $chr) {
+    if($chr eq '*') {
+      $outfile = "$root_path/candidates.orphans.fa";
+      $tmpfile = "$root_path/biobambamtmp.orphans.tmp";
+      $self->{'merged_orph'} = "$root_path/merged_orphans.bam";
+    }
+    else {
+      $outfile = "$root_path/$chr.candidates.fa";
+      $tmpfile = "$root_path/$chr.biobambamtmp.tmp";
+    }
+    if(defined $bam) {
+    my $orphans = "$root_path/$chr.o.sam";
+      open my $orph, '>', $orphans;
+      print $orph grab_bam_header($bam);
+      $self->{'ORPHAN_FH'} = $orph;
+    }
+  }
+  else {
+    $outfile = "$root_path/candidates.fa";
+    $tmpfile = "$root_path/biobambamtmp.tmp";
+  }
+  open my $se, '>', $outfile;
   $self->{'CANDIDATE_FH'} = $se;
+
+  $self->{'biobambam_tmpfile'} = $tmpfile;
   return 1;
 }
 
+sub process_orphans {
+  my ($self, $indir) = @_;
+  my $file_list = $self->find_orphan_files($indir);
+  my $command = sprintf 'bamsort level=1 disablevalidation=0 inputformat=sam tmpfile=%s O=%s I=',
+                        $self->{'biobambam_tmpfile'},
+                        $self->{'merged_orph'};
+  my $full_command = $command.join(q{ I=}, @{$file_list} );
+  system($full_command) == 0 or die "Processing failed: $full_command\n";
+
+  $self->process_files([$self->{'merged_orph'}]);
+  unlink $self->{'merged_orph'}; # contained within this process so clean it up
+  return 1;
+}
+
+sub find_orphan_files {
+  my ($self, $indir) = @_;
+  my @orphans;
+  opendir(my $dh, $indir) || die "Unable to read from $indir: $OS_ERROR";
+  while(my $thing = readdir $dh) {
+    next if($thing =~ m/^[.]/);
+    push @orphans, "$indir/$thing" if($thing =~ m/.*[.]o[.]sam$/);
+  }
+  closedir($dh);
+  return \@orphans;
+}
+
 sub process_files {
-  my ($self, $file_list, $readgroup) = @_;
+  my ($self, $file_list, $chr) = @_;
   my $out_fh = $self->{'CANDIDATE_FH'};
   for my $in(@{$file_list}) {
     warn "Processing: $in\n";
-    my ($r1, $r2);
-    # samcat -f excludes the following
-    #   s    Record is not a primary alignment
-    #   q    Failed platform or vendor quality checks
-    #   d    PCR or optical duplicate
-    #$ENV{SHELL} = '/bin/bash'; # have to ensure bash is in use as pipefail required
-    #my $command = sprintf 'set -o pipefail; samcat -O ubam -f -sqd %s | samgroupbyname -p%s',
-    my $command = sprintf 'bamcollate2 exclude=SECONDARY,QCFAIL,DUP,SUPPLEMENTARY collate=1 classes=F,F2 outputformat=sam filename=%s%s',
+    my ($file_type) = $in =~ m/[.](sam|bam|cram)$/;
+    my $command = sprintf 'bamcollate2 exclude=SECONDARY,QCFAIL,DUP,SUPPLEMENTARY collate=1 outputformat=sam T=%s inputformat=%s filename=%s classes=F,F2%s%s',
+                          $self->{'biobambam_tmpfile'},
+                          $file_type,
                           $in,
-                          ((defined $readgroup) ? " -r $readgroup" : q{});
+                          ((defined $chr) ? ',O,O2' : q{}),
+                          ((defined $chr) ? " ranges=$chr" : q{});
 
     open my $process, '-|', $command;
-    while($r1 = <$process>) {
-      next if((substr $r1,0,1) eq '@');
-      $r2 = <$process>;
-      chomp ($r1, $r2);
-      my ($class, $fasta) = @{$self->pair_to_candidate(\$r1, \$r2)};
+    my ($read1, $read2);
+    MAIN: while($read1 = <$process>) {
+      next if((substr $read1,0,1) eq '@');
+      unless($read2 = <$process>) {
+        print {$self->{'ORPHAN_FH'}} $read1; # not chomped
+        last MAIN;
+      }
+      chomp ($read1, $read2);
+      my @r1 = split /\t/, $read1;
+      my @r2 = split /\t/, $read2;
+      while($r1[0] ne $r2[0]) {
+        print {$self->{'ORPHAN_FH'}} $read1,"\n";
+        $read1 = $read2;
+        @r1 = @r2;
+        $read2 = <$process>;
+        unless($read2) {
+          # the old read2 has not been output yet just moved to $read1
+          print {$self->{'ORPHAN_FH'}} $read1,"\n";
+          last MAIN;
+        }
+        chomp $read2;
+        @r2 = split /\t/, $read2;
+      }
+      my ($class, $fasta) = @{$self->pair_to_candidate(\@r1, \@r2)};
       next unless(defined $class);
       print $out_fh ${$fasta};
 #      last if($. > 1_000_000);
@@ -117,8 +199,8 @@ sub process_files {
 sub pair_to_candidate{
   my ($self, $read1, $read2) = @_;
   # make assumptions that flags are correct
-  my @r1 = split /\t/, ${$read1};
-  my @r2 = split /\t/, ${$read2};
+  my @r1 = @{$read1};
+  my @r2 = @{$read2};
   # both ends unmapped discard
   return [] if(($r1[$FLAG] & $READ_UNMAPPED) && ($r2[$FLAG] & $READ_UNMAPPED));
   # if proper pair return, paranoid version so check each end is mapped
@@ -166,6 +248,7 @@ sub record_out {
 sub DESTROY {
   my $self = shift;
   close $self->{'CANDIDATE_FH'} if(defined $self->{'CANDIDATE_FH'});
+  close $self->{'ORPHAN_FH'} if(defined $self->{'ORPHAN_FH'});
   return 1;
 }
 
