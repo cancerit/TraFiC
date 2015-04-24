@@ -118,6 +118,7 @@ sub setup {
               'o|outdir=s' => \$opts{'outdir'},
               't|tumour=s' => \$opts{'tumour'},
               'n|normal=s' => \$opts{'normal'},
+              'b|badloci=s' => \$opts{'badloci'},
               'td|tdiv=i' => \$opts{'tdiv'},
               'nd|ndiv=i' => \$opts{'ndiv'},
               'd|maskdb=s' => \$opts{'maskdb'},
@@ -150,6 +151,13 @@ sub setup {
   PCAP::Cli::file_for_reading('maskdb', $opts{'maskdb'});
   PCAP::Cli::file_for_reading('rm', $opts{'rm'});
   PCAP::Cli::out_dir_check('outdir', $opts{'outdir'});
+
+  if(defined $opts{'badloci'}) {
+    PCAP::Cli::file_for_reading('badloci', $opts{'badloci'});
+  } else {
+    delete $opts{'badloci'};
+  }
+
 
   # defaults
   $opts{'tdiv'} = 5 unless(defined $opts{'tdiv'});
@@ -273,6 +281,7 @@ TraFiC.pl [options]
     -length    -rl  Max read length in input data [100]
 
   General
+    -badloci   -b   bed[.gz] regions to exclude from read selection (e.g. UCSC high depth regions)
     -cpus      -c   Number of cores to use. [1]
                      - recommend max 4 during 'input' process.
     -limit     -l   When defined with '-cpus' internally thread concurrent processes.

@@ -77,6 +77,9 @@ sub select_candidate_reads {
       my $command = "$^X ";
       $command .= _which('TraFiC_candReads.pl');
       $command .= sprintf $CAND_READS, $chr, $output, $input;
+      if(exists $options->{'badloci'}) {
+        $command .= ' -e '.$options->{'badloci'};
+      }
 
       PCAP::Threaded::external_process_handler(File::Spec->catdir($tmp, 'logs'), $command, $index);
 
