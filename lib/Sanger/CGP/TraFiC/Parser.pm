@@ -150,18 +150,39 @@ sub find_orphan_files {
 }
 
 sub process_files {
-  my ($self, $file_list, $chr) = @_;
+  my ($self, $file_list, $chr, $exclude) = @_;
   my $out_fh = $self->{'CANDIDATE_FH'};
   for my $in(@{$file_list}) {
     warn "Processing: $in\n";
-    my ($file_type) = $in =~ m/[.](sam|bam|cram)$/;
-    my $command = sprintf 'bamcollate2 exclude=SECONDARY,QCFAIL,DUP,SUPPLEMENTARY collate=1 outputformat=sam T=%s inputformat=%s filename=%s classes=F,F2%s%s',
+
+    my $command;
+    if(defined $exclude) {
+      $command = '(';
+      my $in_file = $in;
+      if(defined $chr) {
+        $command .= sprintf 'samtools view -u %s %s | ', $in, $chr;
+        $in_file = '-';
+      }
+      $command .= sprintf 'bedtools intersect -v -ubam -abam %s -b %s | ',
+                          $in_file,
+                          $exclude;
+
+      $command .= sprintf 'bamcollate2 exclude=SECONDARY,QCFAIL,DUP,SUPPLEMENTARY collate=1 outputformat=sam T=%s inputformat=bam classes=F,F2%s',
+                          $self->{'biobambam_tmpfile'},
+                          ((defined $chr) ? ',O,O2' : q{});
+
+      $command .= ')';
+    }
+    else {
+      my ($file_type) = $in =~ m/[.](sam|bam|cram)$/;
+      $command = sprintf 'bamcollate2 exclude=SECONDARY,QCFAIL,DUP,SUPPLEMENTARY collate=1 outputformat=sam T=%s inputformat=%s filename=%s classes=F,F2%s%s',
                           $self->{'biobambam_tmpfile'},
                           $file_type,
                           $in,
                           ((defined $chr) ? ',O,O2' : q{}),
                           ((defined $chr) ? " ranges=$chr" : q{});
-
+    }
+warn $command;
     open my $process, '-|', $command;
     my ($read1, $read2);
     MAIN: while($read1 = <$process>) {

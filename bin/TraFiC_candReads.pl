@@ -53,7 +53,7 @@ try {
   my $options = option_builder();
   my $parser = Sanger::CGP::TraFiC::Parser->new;
   $parser->set_output($options->{'o'}, , $options->{'i'}->[0], $options->{'c'});
-  $parser->process_files($options->{'i'}, $options->{'c'});
+  $parser->process_files($options->{'i'}, $options->{'c'}, $options->{'e'});
 }
 catch {
   croak $_;
@@ -68,6 +68,7 @@ sub option_builder {
 		'h|help'        => \$opts{'h'},
 		'o|output=s'    => \$opts{'o'},
 		'i|input=s@'    => \$opts{'i'},
+		'e|exclude=s'   => \$opts{'e'},
 		'c|chr=s'       => \$opts{'c'},
 	);
 
@@ -85,6 +86,11 @@ sub option_builder {
     warn qq{Output will be to current directory\n};
     $opts{'o'} = '.';
   }
+
+  if(defined $opts{'e'} && (!-e $opts{'e'} || -s _ == 0)) {
+    pod2usage(q{Excllude '-e' must be an existing non-zero bed or bed.gz file});
+  }
+
 
   pod2usage("Unexpected data remains on command after parsing:\n\t".(join ' ', @ARGV)) if(@ARGV > 0);
 
