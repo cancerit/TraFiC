@@ -109,13 +109,6 @@ fi
 #add bin path for install tests
 export PATH="$INST_PATH/bin:$PATH"
 
-CHK=`which RepeatMasker`
-if [[ "x$CHK" == "x" ]] ; then
-  echo "PREREQUISITE: Please install RepeatMasker before proceeding:"
-  echo "  See https://github.com/cancerit/TraFiC/blob/master/README.md for details"
-  exit 1;
-fi
-
 echo -n "Building bedtools ..."
 if [ -e $SETUP_DIR/bedtools.success ]; then
   echo -n " previously installed ...";
@@ -164,6 +157,15 @@ done_message "" "TraFiC install failed."
 
 # cleanup all junk
 rm -rf $SETUP_DIR
+
+CHK=`which RepeatMasker`
+if [[ "x$CHK" == "x" ]] ; then
+  echo "WARNING: You don't appear to have RepeatMasker in your \$path variable:"
+  echo "  You can provide this as an option to the program on the command line,"
+  echo "  however if you need to install this please see the following for details:"
+  echo "    https://github.com/cancerit/TraFiC/blob/master/README.md"
+  exit 1;
+fi
 
 echo
 echo
