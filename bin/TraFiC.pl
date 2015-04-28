@@ -115,6 +115,7 @@ sub setup {
   GetOptions( 'h|help' => \$opts{'h'},
               'm|man' => \$opts{'m'},
               'c|cpus=i' => \$opts{'threads'},
+              'a|accuracy=i' => \$opts{'accuracy'},
               'o|outdir=s' => \$opts{'outdir'},
               't|tumour=s' => \$opts{'tumour'},
               'n|normal=s' => \$opts{'normal'},
@@ -167,6 +168,20 @@ sub setup {
   $opts{'filtmin'} = 2 unless(defined $opts{'filtmin'});
   $opts{'germmin'} = 5 unless(defined $opts{'germmin'});
   $opts{'length'} = 100 unless(defined $opts{'length'});
+  $opts{'accuracy'} = 0 unless(defined $opts{'accuracy'});
+
+  if($opts{'accuracy'} !~ m/^[0-2]$/) {
+    die "ERROR: Option '-a' must be in range 0-2\n";
+  }
+  if($opts{'accuracy'} == 0) {
+    $opts{'accuracy'} = '-s';
+  }
+  elsif($opts{'accuracy'} == 1) {
+    $opts{'accuracy'} = '-q';
+  }
+  elsif($opts{'accuracy'} == 2) {
+    $opts{'accuracy'} = '-qq';
+  }
 
   for my $optional(qw(known germline)){
     if(defined $opts{$optional}) {
@@ -268,6 +283,10 @@ TraFiC.pl [options]
     -rm        -r   Path to RepeatMasker binary [search $PATH]
     -tdiv      -td  Tumour max divergence from RepeatMasker database [5]
     -ndiv      -nd  Normal max divergence from RepeatMasker database [10]
+    -accuracy  -a   Set the accuracy of RM values map to RM args [0]
+                      0 = -s
+                      1 = -q
+                      2 = -qq
 
   Clustering
     -support   -s   Minimum supporting reads required to emit a cluster. [5]

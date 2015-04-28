@@ -201,7 +201,7 @@ sub repeat_mask_te {
 	$command .= " -no_is -nolow";
 	$command .= " -lib $options->{maskdb}";
 	$command .= " -e $options->{engine}";
-	$command .= " -norna -s";
+	$command .= " -norna $options->{accuracy}";
 	$command .= " -frag 2500000";
 	$command .= " -div $divergence"; # should this be configurable?
 	$command .= " -dir $rm_outdir";
