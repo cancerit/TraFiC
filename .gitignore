@@ -19,3 +19,5 @@ nytprof.out
 /setup.log
 *.o
 *.bs
+/perltidy.LOG
+/docs/

@@ -44,10 +44,15 @@ my $data_path = "$Bin/data";
 const my $MODULE => 'Sanger::CGP::TraFiC::Cluster';
 const my $MIN_READ_HIGH => 6;
 const my $MIN_READ_DEFAULT => 5;
-const my $POS_CLUSTER_DEFAULT => 3;
+const my $POS_CLUSTER_DEFAULT => 17;
 const my $POS_CLUSTER_HIGH => 2;
-const my $NEG_CLUSTER_DEFAULT => 5;
-const my $NEG_CLUSTER_HIGH => 3;
+const my $NEG_CLUSTER_DEFAULT => 19;
+const my $NEG_CLUSTER_HIGH => 5;
+
+const my $POS_CLUSTER_DEFAULT_PAIRED_ALU => 3;
+const my $POS_CLUSTER_HIGH_PAIRED_ALU => 2;
+const my $NEG_CLUSTER_DEFAULT_PAIRED_ALU => 5;
+const my $NEG_CLUSTER_HIGH_PAIRED_ALU => 3;
 
 const my $EXPECTED_RECIP => 1;
 
@@ -91,6 +96,21 @@ subtest 'clustering' => sub {
   ok($mod->cluster_hits, 'Full clustering with defaults');
   is(count_records("$tmp_dir/pos_clusters.txt"), $POS_CLUSTER_DEFAULT, 'Expected pos clusters for min_reads='.$MIN_READ_DEFAULT);
   is(count_records("$tmp_dir/neg_clusters.txt"), $NEG_CLUSTER_DEFAULT, 'Expected neg clusters for min_reads='.$MIN_READ_DEFAULT);
+};
+
+subtest 'clustering+paired_alu' => sub {
+  $mod->set_paired_alu(1);
+  $mod->set_min_reads($MIN_READ_HIGH);
+  ok($mod->cluster_file('+'), 'Clustered pos data, min_reads='.$MIN_READ_HIGH);
+  is(count_records("$tmp_dir/pos_clusters.txt"), $POS_CLUSTER_HIGH_PAIRED_ALU, 'Expected pos clusters (+paired_alu) for min_reads='.$MIN_READ_HIGH);
+  ok($mod->cluster_file('-'), 'Clustered neg data, min_reads='.$MIN_READ_HIGH);
+  is(count_records("$tmp_dir/neg_clusters.txt"), $NEG_CLUSTER_HIGH_PAIRED_ALU, 'Expected neg clusters (+paired_alu) for min_reads='.$MIN_READ_HIGH);
+
+  $mod->set_min_reads;
+  ok($mod->cluster_hits, 'Full clustering with defaults');
+  is(count_records("$tmp_dir/pos_clusters.txt"), $POS_CLUSTER_DEFAULT_PAIRED_ALU, 'Expected pos clusters (+paired_alu) for min_reads='.$MIN_READ_DEFAULT);
+  is(count_records("$tmp_dir/neg_clusters.txt"), $NEG_CLUSTER_DEFAULT_PAIRED_ALU, 'Expected neg clusters (+paired_alu) for min_reads='.$MIN_READ_DEFAULT);
+  $mod->set_paired_alu(0);
 };
 
 subtest 'reciprocals' => sub {
