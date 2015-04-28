@@ -109,6 +109,13 @@ fi
 #add bin path for install tests
 export PATH="$INST_PATH/bin:$PATH"
 
+CHK=`which RepeatMasker`
+if [[ "x$CHK" == "x" ]] ; then
+  echo "PREREQUISITE: Please install RepeatMasker before proceeding:"
+  echo "  See https://github.com/cancerit/TraFiC/blob/master/README.md for details"
+  exit 1;
+fi
+
 echo -n "Building bedtools ..."
 if [ -e $SETUP_DIR/bedtools.success ]; then
   echo -n " previously installed ...";
@@ -126,24 +133,13 @@ else
 fi
 done_message "" "Failed to build bedtools."
 
-echo -n "Compiling pindel binaries ..."
-(
-  set -x
-  g++ -O3 -o $SETUP_DIR/pindel c++/pindel.cpp
-  g++ -O3 -o $SETUP_DIR/filter_pindel_reads c++/filter_pindel_reads.cpp
-  cp $SETUP_DIR/pindel $INST_PATH/bin/.
-  cp $SETUP_DIR/filter_pindel_reads $INST_PATH/bin/.
-  # convenience for testing
-  mkdir -p $INIT_DIR/bin
-  cp $SETUP_DIR/pindel $INIT_DIR/bin/.
-  cp $SETUP_DIR/filter_pindel_reads $INIT_DIR/bin/.
-) >>$INIT_DIR/setup.log 2>&1
-done_message "" "Failed during compilation of pindel."
-
 #add bin path for install tests
 export PATH="$INST_PATH/bin:$PATH"
 
-cd $INIT_DIR/perl
+## grab cpanm:
+cd $INIT_DIR
+curl -sSLO http://xrl.us/cpanm
+chmod +x cpanm
 
 echo -n "Installing Perl prerequisites ..."
 if ! ( perl -MExtUtils::MakeMaker -e 1 >/dev/null 2>&1); then
@@ -152,7 +148,7 @@ if ! ( perl -MExtUtils::MakeMaker -e 1 >/dev/null 2>&1); then
 fi
 (
   set -x
-  $INIT_DIR/perl/bin/cpanm -v --mirror http://cpan.metacpan.org -notest -l $INST_PATH/ --installdeps . < /dev/null
+  $INIT_DIR/cpanm -v --mirror http://cpan.metacpan.org -notest -l $INST_PATH/ --installdeps . < /dev/null
   set +x
 ) >>$INIT_DIR/setup.log 2>&1
 done_message "" "Failed during installation of core dependencies."
