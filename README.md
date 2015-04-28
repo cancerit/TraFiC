@@ -41,12 +41,17 @@ Something about TraFiC
 Please install the following first:
 
 * [PCAP-core](http://github.com/ICGC-TCGA-PanCancer/PCAP-core/releases)
+* [RepeatMasker](http://www.repeatmasker.org/RMDownload.html)
+    * We recommend the [RMBlast](http://www.repeatmasker.org/RMBlast.html) engine as it is easy to obtain (crossmatch is slightly faster)
+    * Ensure that this is available in your `$PATH` environment variable.
 
 Please see these for any child dependencies.
 
 Once complete please run:
 
+```
 ./setup.sh /some/install/location
+```
 
 ---
 

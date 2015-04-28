@@ -42,6 +42,7 @@ WriteMakefile(
                     TraFiC_candSplit.pl
                     TraFiC_cluster.pl
                     TraFiC_filter.pl
+                    TraFiC.pl
   )],
   PREREQ_PM     => {
                       'autodie' => 2.26,
