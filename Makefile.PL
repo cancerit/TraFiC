@@ -38,10 +38,11 @@ WriteMakefile(
   LICENSE       => 'agpl_3', # http://search.cpan.org/~dagolden/CPAN-Meta-2.142690/lib/CPAN/Meta/Spec.pm#license
   VERSION_FROM  => 'lib/Sanger/CGP/TraFiC.pm',
   EXE_FILES     => [qw(
-                    TraFiC_candReads.pl
-                    TraFiC_candSplit.pl
-                    TraFiC_cluster.pl
-                    TraFiC_filter.pl
+                    bin/TraFiC_candReads.pl
+                    bin/TraFiC_candSplit.pl
+                    bin/TraFiC_cluster.pl
+                    bin/TraFiC_filter.pl
+                    bin/TraFiC.pl
   )],
   PREREQ_PM     => {
                       'autodie' => 2.26,
