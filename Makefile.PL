@@ -39,6 +39,7 @@ WriteMakefile(
   VERSION_FROM  => 'lib/Sanger/CGP/TraFiC.pm',
   EXE_FILES     => [qw(
                     bin/TraFiC_candReads.pl
+                    bin/TraFiC_candOrph.pl
                     bin/TraFiC_candSplit.pl
                     bin/TraFiC_cluster.pl
                     bin/TraFiC_filter.pl
