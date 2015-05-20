@@ -32,6 +32,8 @@ identical to a statement that reads 'Copyright (c) 2005, 2006, 2007, 2008,
 TraFiC
 ======
 
+[![DOI](https://zenodo.org/badge/10817/cancerit/TraFiC.svg)](http://dx.doi.org/10.5281/zenodo.17793)
+
 TraFiC (Transposon Finder in Cancer) uses paired-end sequencing data for the identification of
 somatic insertion of transposable elements.  The identification of somatic TEs is performed in
 four steps:
