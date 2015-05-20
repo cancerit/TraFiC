@@ -213,7 +213,7 @@ sub setup {
   $opts{'split_files'} = Sanger::CGP::TraFiC::Implement::split_files($opts{'tmp'});
   $opts{'split_count'} = scalar @{$opts{'split_files'}};
 
-  $opts{'engine'} = 'crossmatch' unless(defined $opts{'engine'});
+  $opts{'engine'} = 'ncbi' unless(defined $opts{'engine'});
 
   if(exists $opts{'process'}) {
     PCAP::Cli::valid_process('process', $opts{'process'}, \@VALID_PROCESS);
@@ -279,7 +279,7 @@ TraFiC.pl [options]
     -maskdb    -d   RepeatMasker database
 
   RepeatMasker
-    -engine    -e   RepeatMasker engine [crossmatch]
+    -engine    -e   RepeatMasker engine [ncbi]
     -rm        -r   Path to RepeatMasker binary [search $PATH]
     -tdiv      -td  Tumour max divergence from RepeatMasker database [5]
     -ndiv      -nd  Normal max divergence from RepeatMasker database [10]

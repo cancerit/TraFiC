@@ -32,7 +32,41 @@ identical to a statement that reads 'Copyright (c) 2005, 2006, 2007, 2008,
 TraFiC
 ======
 
-Something about TraFiC
+TraFiC (Transposon Finder in Cancer) uses paired-end sequencing data for the identification of
+somatic insertion of transposable elements.  The identification of somatic TEs is performed in
+four steps:
+
+1. Selection of candidate reads.
+2. Transposable element masking.
+3. Clustering and prediction of insertions sites.
+4. Filtering of germline events.
+
+## Interpretation of results
+
+The final results are found in the `filtered.txt` file.  Columns are defined as follows:
+
+* **CHR** - Chromosome of somatic insertion
+* **FAMILY** - Transposon type
+* **P\_L\_POS** - Left position of positive cluster supporting somatic insertion
+* **P\_R\_POS** - Right position of positive cluster supporting somatic insertion
+* **P\_TOTAL\_READS** - Total number of reads supporting somatic insertion in positive cluster
+* **P\_SINGLE\_END\_COUNT** - Number of Single-end reads supporting somatic insertion in positive cluster
+* **P\_INTER\_CHROM\_COUNT** - Number of Inter-chromosomal reads supporting somatic insertion in positive cluster
+* **P\_ABERRANT\_COUNT** - Number of Intra-chromosomal reads supporting somatic insertion in positive cluster
+* **P\_SINGLE\_END\_READS** - Names of Single-end reads supporting somatic insertion in positive cluster
+* **P\_INTER\_CHROM\_READS** - Names of Inter-chromosomal reads supporting somatic insertion in positive cluster
+* **P\_ABERRANT\_READS** - Names of Intra-chromosomal reads supporting somatic insertion in positive cluster
+* **N\_L\_POS** - Left position of negative cluster supporting somatic insertion
+* **N\_R\_POS** - Right position of negative cluster supporting somatic insertion
+* **N\_TOTAL\_READS** - Total number of reads supporting somatic insertion in negative cluster
+* **N\_SINGLE\_END\_COUNT** - Number of Single-end reads supporting somatic insertion in negative cluster
+* **N\_INTER\_CHROM\_COUNT** - Number of Inter-chromosomal reads supporting somatic insertion in negative cluster
+* **N\_ABERRANT\_COUNT** - Number of Intra-chromosomal reads supporting somatic insertion in negative cluster
+* **N\_SINGLE\_END\_READS** - Names of Single-end reads supporting somatic insertion in negative cluster
+* **N\_INTER\_CHROM\_READS** - Names of Inter-chromosomal reads supporting somatic insertion in negative cluster
+* **N\_ABERRANT\_READS** - Names of Intra-chromosomal reads supporting somatic insertion in negative cluster
+
+Events supported by at minimum of 5 reads in the both the positive and negative clusters are considered highly accurate.
 
 ---
 
@@ -62,11 +96,12 @@ This installs [Bedtools](http://bedtools.readthedocs.org/en/latest/) and the Tra
 * Pull a clean version of the repo and use this for the following steps.
 
 ####Cutting the release
-1. Update `perl/lib/Sanger/CGP/Pindel.pm` to the correct version (adding rc/beta to end if applicable).
+**This should be carried out using hubflow tools**
+1. Update `perl/lib/Sanger/CGP/TraFiC.pm` to the correct version.
 2. Update `Changes` to show major items.
 3. Run `./prerelease.sh`
 4. Check all tests and coverage reports are acceptable.
 5. Commit the updated docs tree and updated module/version.
 6. Push commits.
-7. Use the GitHub tools to draft a release.
+7. Use the GitHub tools to add details to the generated tag.
 8. Add relevant *.tar.gz for reference data to release.

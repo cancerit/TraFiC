@@ -182,7 +182,7 @@ sub process_files {
                           ((defined $chr) ? ',O,O2' : q{}),
                           ((defined $chr) ? " ranges=$chr" : q{});
     }
-warn $command;
+
     open my $process, '-|', $command;
     my ($read1, $read2);
     MAIN: while($read1 = <$process>) {
@@ -195,12 +195,14 @@ warn $command;
       my @r1 = split /\t/, $read1;
       my @r2 = split /\t/, $read2;
       while($r1[0] ne $r2[0]) {
+        $read1 =~ s/\tPG:Z[^\t]+//;
         print {$self->{'ORPHAN_FH'}} $read1,"\n";
         $read1 = $read2;
         @r1 = @r2;
         $read2 = <$process>;
         unless($read2) {
           # the old read2 has not been output yet just moved to $read1
+          $read1 =~ s/\tPG:Z[^\t]+//;
           print {$self->{'ORPHAN_FH'}} $read1,"\n";
           last MAIN;
         }
