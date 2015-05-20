@@ -96,11 +96,12 @@ This installs [Bedtools](http://bedtools.readthedocs.org/en/latest/) and the Tra
 * Pull a clean version of the repo and use this for the following steps.
 
 ####Cutting the release
-1. Update `perl/lib/Sanger/CGP/Pindel.pm` to the correct version (adding rc/beta to end if applicable).
+**This should be carried out using hubflow tools**
+1. Update `perl/lib/Sanger/CGP/TraFiC.pm` to the correct version.
 2. Update `Changes` to show major items.
 3. Run `./prerelease.sh`
 4. Check all tests and coverage reports are acceptable.
 5. Commit the updated docs tree and updated module/version.
 6. Push commits.
-7. Use the GitHub tools to draft a release.
+7. Use the GitHub tools to add details to the generated tag.
 8. Add relevant *.tar.gz for reference data to release.
