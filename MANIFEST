@@ -4,6 +4,7 @@ bin/TraFiC_candReads.pl
 bin/TraFiC_candSplit.pl
 bin/TraFiC_cluster.pl
 bin/TraFiC_filter.pl
+CHANGES
 cpanm
 docs.tar.gz
 docs/pod_html/_blkbluw.css
